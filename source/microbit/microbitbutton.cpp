@@ -43,12 +43,16 @@ static mp_uint_t pressed[2];
 static int8_t sigmas[8] = { 5, 5, 5, 5, 5, 5, 5, 5 };
 static bool debounced_high[8] = { true, true, true, true, true, true, true, true };
 
-mp_obj_t microbit_button_is_pressed(mp_obj_t self_in) {
-    microbit_button_obj_t *self = (microbit_button_obj_t*)self_in;
+bool microbit_button_is_pressed(const microbit_button_obj_t *self) {
     /* Button is pressed if pin is low */
-    return mp_obj_new_bool(!debounced_high[self->pin->number&7]);
+    return !debounced_high[self->pin->number&7];
 }
-MP_DEFINE_CONST_FUN_OBJ_1(microbit_button_is_pressed_obj, microbit_button_is_pressed);
+
+static mp_obj_t microbit_button_is_pressed_func(mp_obj_t self_in) {
+    microbit_button_obj_t *self = (microbit_button_obj_t*)self_in;
+    return mp_obj_new_bool(microbit_button_is_pressed(self));
+}
+MP_DEFINE_CONST_FUN_OBJ_1(microbit_button_is_pressed_obj, microbit_button_is_pressed_func);
 
 
 mp_obj_t microbit_button_get_presses(mp_obj_t self_in) {
@@ -109,8 +113,6 @@ const microbit_button_obj_t microbit_button_b_obj = {
     .index = 1,
 };
 
-extern uint8_t microbit_pinmodes[];
-
 enum PinTransition
 {
     LOW_LOW = 0,
@@ -162,11 +164,11 @@ void microbit_button_tick(void) {
         pressed[microbit_button_a_obj.index] = (pressed[microbit_button_a_obj.index] + 2) | 1;
     if (update(microbit_button_b_obj.pin) == HIGH_LOW)
         pressed[microbit_button_b_obj.index] = (pressed[microbit_button_b_obj.index] + 2) | 1;
-    if (microbit_obj_pin_get_mode(&microbit_p0_obj) == MP_QSTR_touch)
+    if (microbit_pin_get_mode(&microbit_p0_obj) == microbit_pin_mode_touch)
         update(&microbit_p0_obj);
-    if (microbit_obj_pin_get_mode(&microbit_p1_obj) == MP_QSTR_touch)
+    if (microbit_pin_get_mode(&microbit_p1_obj) == microbit_pin_mode_touch)
         update(&microbit_p1_obj);
-    if (microbit_obj_pin_get_mode(&microbit_p2_obj) == MP_QSTR_touch)
+    if (microbit_pin_get_mode(&microbit_p2_obj) == microbit_pin_mode_touch)
         update(&microbit_p2_obj);
 }
 

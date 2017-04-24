@@ -14,6 +14,7 @@ extern "C" {
     void microbit_accelerometer_init(void);
     void microbit_button_tick(void);
     void pwm_init(void);
+    void MicroBit_seedRandom(void);
 }
 
 void app_main() {
@@ -45,16 +46,9 @@ void app_main() {
 
 extern "C" {
 
+extern void compass_tick(void);
+
 void microbit_ticker(void) {
-
-    /** Update compass if it is calibrating, but not if it is still
-     *  updating as compass.idleTick() is not reentrant.
-     */
-    if (uBit.compass.isCalibrating() && !compass_updating) {
-        uBit.compass.idleTick();
-    }
-
-    compass_up_to_date = false;
     accelerometer_up_to_date = false;
 
     // Update buttons and pins with touch.
@@ -65,6 +59,11 @@ void microbit_ticker(void) {
 
     // Update the music
     microbit_music_tick();
+
+    //Update the compass
+    compass_tick();
+    compass_up_to_date = false;
+
 }
 
 // We need to override this function so that the linker does not pull in
@@ -85,6 +84,7 @@ void microbit_init(void) {
     ticker_init(microbit_ticker);
     ticker_start();
     pwm_start();
+    MicroBit_seedRandom();
 }
 
 }
